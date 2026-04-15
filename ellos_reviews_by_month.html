@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ellos.se — Review Collection Overview</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #111827; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  h1 { font-size: 22px; font-weight: 700; }
+  .subtitle { color: #6b7280; font-size: 13px; margin-top: 4px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+  .stat-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #f3f4f6; }
+  .stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .stat-sub { font-size: 11px; color: #9ca3af; }
+  .btn-group { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .btn { padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #e5e7eb; background: #fff; color: #4b5563; transition: all 0.15s; }
+  .btn:hover { background: #f9fafb; }
+  .btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+  .btn-sm { padding: 5px 12px; font-size: 11px; border-radius: 6px; }
+  .btn-sm.active-dark { background: #1f2937; color: #fff; border-color: #1f2937; }
+  .chart-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #f3f4f6; position: relative; }
+  .chart-card canvas { max-height: 440px; }
+  .footer { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 20px; }
+  #yearFilters { display: none; }
+  #yearFilters.show { display: flex; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div style="margin-bottom: 24px;">
+    <h1>Ellos.se — Review Collection Overview</h1>
+    <p class="subtitle">Monthly reviews collected (2021 – Mar 2026) from 125,590 individual review dates across 30,752 products</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Reviews (2021+)</div>
+      <div class="stat-value" id="statTotal"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Peak Month</div>
+      <div class="stat-value" id="statPeak"></div>
+      <div class="stat-sub" id="statPeakCount"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Monthly Average</div>
+      <div class="stat-value" id="statAvg"></div>
+    </div>
+  </div>
+
+  <div class="btn-group" id="viewButtons">
+    <button class="btn active" data-view="monthly">Monthly</button>
+    <button class="btn" data-view="yearly">Yearly</button>
+    <button class="btn" data-view="yoy">Year-over-Year</button>
+  </div>
+
+  <div class="btn-group" id="yearFilters">
+    <button class="btn btn-sm active-dark" data-year="all">All Years</button>
+    <button class="btn btn-sm" data-year="2021">2021</button>
+    <button class="btn btn-sm" data-year="2022">2022</button>
+    <button class="btn btn-sm" data-year="2023">2023</button>
+    <button class="btn btn-sm" data-year="2024">2024</button>
+    <button class="btn btn-sm" data-year="2025">2025</button>
+    <button class="btn btn-sm" data-year="2026">2026</button>
+  </div>
+
+  <div class="chart-card">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <p class="footer">Based on 125,590 individual review dates across all 30,752 products. Data through March 2026.</p>
+</div>
+
+<script>
+const monthlyData = [
+  { month: "2021-01", reviews: 309 }, { month: "2021-02", reviews: 318 }, { month: "2021-03", reviews: 386 },
+  { month: "2021-04", reviews: 301 }, { month: "2021-05", reviews: 323 }, { month: "2021-06", reviews: 263 },
+  { month: "2021-07", reviews: 266 }, { month: "2021-08", reviews: 304 }, { month: "2021-09", reviews: 369 },
+  { month: "2021-10", reviews: 377 }, { month: "2021-11", reviews: 365 }, { month: "2021-12", reviews: 420 },
+  { month: "2022-01", reviews: 324 }, { month: "2022-02", reviews: 342 }, { month: "2022-03", reviews: 313 },
+  { month: "2022-04", reviews: 332 }, { month: "2022-05", reviews: 307 }, { month: "2022-06", reviews: 271 },
+  { month: "2022-07", reviews: 346 }, { month: "2022-08", reviews: 371 }, { month: "2022-09", reviews: 463 },
+  { month: "2022-10", reviews: 431 }, { month: "2022-11", reviews: 513 }, { month: "2022-12", reviews: 475 },
+  { month: "2023-01", reviews: 417 }, { month: "2023-02", reviews: 416 }, { month: "2023-03", reviews: 481 },
+  { month: "2023-04", reviews: 442 }, { month: "2023-05", reviews: 410 }, { month: "2023-06", reviews: 2739 },
+  { month: "2023-07", reviews: 2472 }, { month: "2023-08", reviews: 2687 }, { month: "2023-09", reviews: 2707 },
+  { month: "2023-10", reviews: 2731 }, { month: "2023-11", reviews: 2936 }, { month: "2023-12", reviews: 3311 },
+  { month: "2024-01", reviews: 2292 }, { month: "2024-02", reviews: 2422 }, { month: "2024-03", reviews: 2616 },
+  { month: "2024-04", reviews: 2973 }, { month: "2024-05", reviews: 3493 }, { month: "2024-06", reviews: 3155 },
+  { month: "2024-07", reviews: 3023 }, { month: "2024-08", reviews: 3017 }, { month: "2024-09", reviews: 3295 },
+  { month: "2024-10", reviews: 3765 }, { month: "2024-11", reviews: 3667 }, { month: "2024-12", reviews: 3115 },
+  { month: "2025-01", reviews: 987 },  { month: "2025-02", reviews: 2268 }, { month: "2025-03", reviews: 3119 },
+  { month: "2025-04", reviews: 2350 }, { month: "2025-05", reviews: 2353 }, { month: "2025-06", reviews: 3441 },
+  { month: "2025-07", reviews: 4490 }, { month: "2025-08", reviews: 4067 }, { month: "2025-09", reviews: 3096 },
+  { month: "2025-10", reviews: 3785 }, { month: "2025-11", reviews: 1826 }, { month: "2025-12", reviews: 3227 },
+  { month: "2026-01", reviews: 1646 }, { month: "2026-02", reviews: 1421 }, { month: "2026-03", reviews: 7270 },
+];
+
+const yearColors = { 2021: "#6366f1", 2022: "#8b5cf6", 2023: "#ec4899", 2024: "#f97316", 2025: "#10b981", 2026: "#3b82f6" };
+const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// Stats
+const total = monthlyData.reduce((s, d) => s + d.reviews, 0);
+const peak = monthlyData.reduce((a, b) => a.reviews > b.reviews ? a : b);
+const avg = Math.round(total / monthlyData.length);
+document.getElementById("statTotal").textContent = total.toLocaleString();
+document.getElementById("statPeak").textContent = peak.month;
+document.getElementById("statPeakCount").textContent = peak.reviews.toLocaleString() + " reviews";
+document.getElementById("statAvg").textContent = avg.toLocaleString();
+
+// Chart
+const ctx = document.getElementById("chart").getContext("2d");
+let currentChart = null;
+let currentView = "monthly";
+let currentYear = "all";
+
+function destroyChart() {
+  if (currentChart) { currentChart.destroy(); currentChart = null; }
+}
+
+function renderMonthly(year) {
+  destroyChart();
+  const data = year === "all" ? monthlyData : monthlyData.filter(d => d.month.startsWith(year));
+  const bgColors = data.map(d => {
+    const y = parseInt(d.month.slice(0, 4));
+    return yearColors[y] + "30";
+  });
+  const borderColors = data.map(d => {
+    const y = parseInt(d.month.slice(0, 4));
+    return yearColors[y];
+  });
+
+  currentChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: data.map(d => d.month),
+      datasets: [{
+        label: "Reviews",
+        data: data.map(d => d.reviews),
+        backgroundColor: bgColors,
+        borderColor: borderColors,
+        borderWidth: 1.5,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#111827",
+          titleFont: { weight: "600" },
+          callbacks: { label: ctx => ctx.parsed.y.toLocaleString() + " reviews" }
+        }
+      },
+      scales: {
+        x: { ticks: { maxRotation: 45, font: { size: 10 }, color: "#9ca3af" }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: "#9ca3af", callback: v => v.toLocaleString() }, grid: { color: "#f3f4f6" } }
+      }
+    }
+  });
+}
+
+function renderYearly() {
+  destroyChart();
+  const grouped = {};
+  monthlyData.forEach(d => {
+    const y = d.month.slice(0, 4);
+    grouped[y] = (grouped[y] || 0) + d.reviews;
+  });
+  const years = Object.keys(grouped).sort();
+  const values = years.map(y => grouped[y]);
+
+  currentChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: years,
+      datasets: [{
+        label: "Reviews",
+        data: values,
+        backgroundColor: years.map(y => yearColors[parseInt(y)] + "40"),
+        borderColor: years.map(y => yearColors[parseInt(y)]),
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#111827",
+          titleFont: { weight: "600" },
+          callbacks: { label: ctx => ctx.parsed.y.toLocaleString() + " reviews" }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 13, weight: "500" }, color: "#374151" }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: "#9ca3af", callback: v => v.toLocaleString() }, grid: { color: "#f3f4f6" } }
+      }
+    }
+  });
+}
+
+function renderYoY() {
+  destroyChart();
+  const years = [2021, 2022, 2023, 2024, 2025, 2026];
+  const datasets = years.map(y => {
+    const data = monthNames.map((_, i) => {
+      const key = `${y}-${String(i + 1).padStart(2, "0")}`;
+      const found = monthlyData.find(d => d.month === key);
+      return found ? found.reviews : null;
+    });
+    return {
+      label: String(y),
+      data: data,
+      borderColor: yearColors[y],
+      backgroundColor: yearColors[y] + "20",
+      borderWidth: 2.5,
+      pointRadius: 3,
+      pointBackgroundColor: yearColors[y],
+      tension: 0.3,
+      spanGaps: false,
+    };
+  });
+
+  currentChart = new Chart(ctx, {
+    type: "line",
+    data: { labels: monthNames, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "top", labels: { usePointStyle: true, pointStyle: "circle", padding: 20, font: { size: 12 } } },
+        tooltip: {
+          backgroundColor: "#111827",
+          callbacks: { label: ctx => ctx.dataset.label + ": " + (ctx.parsed.y ? ctx.parsed.y.toLocaleString() : "—") + " reviews" }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 12 }, color: "#374151" }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: "#9ca3af", callback: v => v.toLocaleString() }, grid: { color: "#f3f4f6" } }
+      }
+    }
+  });
+}
+
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll("#viewButtons .btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  document.getElementById("yearFilters").classList.toggle("show", view === "monthly");
+
+  if (view === "monthly") renderMonthly(currentYear);
+  else if (view === "yearly") renderYearly();
+  else renderYoY();
+}
+
+function setYear(year) {
+  currentYear = year;
+  document.querySelectorAll("#yearFilters .btn").forEach(b => {
+    b.classList.remove("active-dark");
+    b.style.backgroundColor = "";
+    b.style.color = "";
+    b.style.borderColor = "";
+    if (b.dataset.year === year) {
+      if (year === "all") {
+        b.classList.add("active-dark");
+      } else {
+        b.style.backgroundColor = yearColors[parseInt(year)];
+        b.style.color = "#fff";
+        b.style.borderColor = yearColors[parseInt(year)];
+      }
+    }
+  });
+  renderMonthly(year);
+}
+
+document.querySelectorAll("#viewButtons .btn").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+document.querySelectorAll("#yearFilters .btn").forEach(b => b.addEventListener("click", () => setYear(b.dataset.year)));
+
+// Initial render
+document.getElementById("chart").parentElement.style.height = "460px";
+setView("monthly");
+</script>
+</body>
+</html>
